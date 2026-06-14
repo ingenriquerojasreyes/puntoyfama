@@ -21,6 +21,8 @@ class _GameScreenState extends State<GameScreen> {
   late List<List<String>> _colores;
   int _intentoActual = 0;
   String _inputActual = '';
+  late String _secreto;
+  bool _juegoTerminado = false;
 
   @override
   void initState() {
@@ -29,35 +31,130 @@ class _GameScreenState extends State<GameScreen> {
     _maxIntentos = widget.nivel == 'Básico' ? 7 : widget.nivel == 'Medio' ? 10 : 15;
     _grid = List.generate(_maxIntentos, (_) => List.filled(_cifras, ''));
     _colores = List.generate(_maxIntentos, (_) => List.filled(_cifras, 'vacio'));
+    _secreto = _generarSecreto();
+    debugPrint('Secreto: $_secreto');
+  }
+
+  String _generarSecreto() {
+    final digitos = ['0','1','2','3','4','5','6','7','8','9'];
+    digitos.shuffle();
+    if (digitos[0] == '0') {
+      final idx = digitos.indexWhere((d) => d != '0');
+      final tmp = digitos[0];
+      digitos[0] = digitos[idx];
+      digitos[idx] = tmp;
+    }
+    return digitos.sublist(0, _cifras).join();
+  }
+
+  bool _tieneRepetidos(String intento) {
+    return intento.length != intento.split('').toSet().length;
+  }
+
+  Map<int, String> _evaluar(String secreto, String intento) {
+    final resultado = <int, String>{};
+    for (int i = 0; i < _cifras; i++) {
+      if (intento[i] == secreto[i]) {
+        resultado[i] = 'fama';
+      } else if (secreto.contains(intento[i])) {
+        resultado[i] = 'punto';
+      } else {
+        resultado[i] = 'nope';
+      }
+    }
+    return resultado;
   }
 
   void _onTecla(String valor) {
+    if (_juegoTerminado) return;
+
     if (valor == 'DEL') {
       if (_inputActual.isNotEmpty) {
         setState(() => _inputActual = _inputActual.substring(0, _inputActual.length - 1));
       }
       return;
     }
+
     if (valor == 'OK') {
-      if (_inputActual.length == _cifras) _enviarIntento();
+      if (_inputActual.length == _cifras) {
+        if (_tieneRepetidos(_inputActual)) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Sin dígitos repetidos'),
+              duration: Duration(seconds: 1),
+              backgroundColor: Color(0xFF854F0B),
+            ),
+          );
+          return;
+        }
+        _enviarIntento();
+      }
       return;
     }
+
     if (_inputActual.length < _cifras) {
       setState(() => _inputActual += valor);
     }
   }
 
   void _enviarIntento() {
-    // Por ahora colores aleatorios para ver la animación
-    final colores = ['fama', 'punto', 'nope'];
+    final resultado = _evaluar(_secreto, _inputActual);
     setState(() {
       for (int i = 0; i < _cifras; i++) {
         _grid[_intentoActual][i] = _inputActual[i];
-        _colores[_intentoActual][i] = colores[i % 3];
+        _colores[_intentoActual][i] = resultado[i]!;
       }
       _intentoActual++;
       _inputActual = '';
     });
+
+    final gano = resultado.values.every((c) => c == 'fama');
+    final perdio = _intentoActual >= _maxIntentos;
+
+    if (gano || perdio) {
+      _juegoTerminado = true;
+      Future.delayed(const Duration(milliseconds: 400), () {
+        _mostrarResultado(gano: gano);
+      });
+    }
+  }
+
+  void _mostrarResultado({required bool gano}) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF26215C),
+        title: Text(
+          gano ? '¡Ganaste!' : 'Perdiste',
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 24,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        content: Text(
+          gano
+              ? '+${widget.modo == 'Normal' ? 50 : 100} puntos'
+              : 'El número era $_secreto',
+          style: const TextStyle(color: Color(0xFFEEEDFE), fontSize: 20),
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pop(context);
+            },
+            child: const Text(
+              'Volver',
+              style: TextStyle(color: Color(0xFF534AB7), fontSize: 16),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Color _colorFondo(String estado) {
@@ -98,13 +195,12 @@ class _GameScreenState extends State<GameScreen> {
       body: Column(
         children: [
           const SizedBox(height: 16),
-          // GRID
           Expanded(
             child: ListView.builder(
               shrinkWrap: true,
               itemCount: _maxIntentos,
               itemBuilder: (_, fila) {
-                final esFila = fila == _intentoActual;
+                final esFila = fila == _intentoActual && !_juegoTerminado;
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 24),
                   child: Row(
@@ -147,7 +243,6 @@ class _GameScreenState extends State<GameScreen> {
               },
             ),
           ),
-          // TECLADO
           _buildTeclado(),
           const SizedBox(height: 16),
         ],
