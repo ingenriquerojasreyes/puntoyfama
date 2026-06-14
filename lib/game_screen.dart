@@ -19,10 +19,13 @@ class _GameScreenState extends State<GameScreen> {
   late int _maxIntentos;
   late List<List<String>> _grid;
   late List<List<String>> _colores;
+  late List<String> _resultados; // "2F 1P" por fila
   int _intentoActual = 0;
   String _inputActual = '';
   late String _secreto;
   bool _juegoTerminado = false;
+
+  bool get _esHardcore => widget.modo == 'Hardcore';
 
   @override
   void initState() {
@@ -31,6 +34,7 @@ class _GameScreenState extends State<GameScreen> {
     _maxIntentos = widget.nivel == 'Básico' ? 7 : widget.nivel == 'Medio' ? 10 : 15;
     _grid = List.generate(_maxIntentos, (_) => List.filled(_cifras, ''));
     _colores = List.generate(_maxIntentos, (_) => List.filled(_cifras, 'vacio'));
+    _resultados = List.filled(_maxIntentos, '');
     _secreto = _generarSecreto();
     debugPrint('Secreto: $_secreto');
   }
@@ -99,16 +103,20 @@ class _GameScreenState extends State<GameScreen> {
 
   void _enviarIntento() {
     final resultado = _evaluar(_secreto, _inputActual);
+    final famas = resultado.values.where((c) => c == 'fama').length;
+    final puntos = resultado.values.where((c) => c == 'punto').length;
+
     setState(() {
       for (int i = 0; i < _cifras; i++) {
         _grid[_intentoActual][i] = _inputActual[i];
-        _colores[_intentoActual][i] = resultado[i]!;
+        _colores[_intentoActual][i] = _esHardcore ? 'hardcore' : resultado[i]!;
       }
+      _resultados[_intentoActual] = '${famas}F ${puntos}P';
       _intentoActual++;
       _inputActual = '';
     });
 
-    final gano = resultado.values.every((c) => c == 'fama');
+    final gano = famas == _cifras;
     final perdio = _intentoActual >= _maxIntentos;
 
     if (gano || perdio) {
@@ -136,7 +144,7 @@ class _GameScreenState extends State<GameScreen> {
         ),
         content: Text(
           gano
-              ? '+${widget.modo == 'Normal' ? 50 : 100} puntos'
+              ? '+${_esHardcore ? 100 : 50} puntos'
               : 'El número era $_secreto',
           style: const TextStyle(color: Color(0xFFEEEDFE), fontSize: 20),
           textAlign: TextAlign.center,
@@ -202,42 +210,62 @@ class _GameScreenState extends State<GameScreen> {
               itemBuilder: (_, fila) {
                 final esFila = fila == _intentoActual && !_juegoTerminado;
                 return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 24),
+                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(_cifras, (col) {
-                      final texto = esFila && col < _inputActual.length
-                          ? _inputActual[col]
-                          : _grid[fila][col];
-                      final estado = _colores[fila][col];
-                      return Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: _colorFondo(estado),
-                          border: Border.all(
-                            color: esFila
-                                ? const Color(0xFF534AB7)
-                                : estado == 'vacio'
-                                    ? Colors.white24
-                                    : Colors.transparent,
-                            width: 2,
+                    children: [
+                      ...List.generate(_cifras, (col) {
+                        final texto = esFila && col < _inputActual.length
+                            ? _inputActual[col]
+                            : _grid[fila][col];
+                        final estado = _colores[fila][col];
+                        return Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 3),
+                          width: 52,
+                          height: 52,
+                          decoration: BoxDecoration(
+                            color: _colorFondo(estado),
+                            border: Border.all(
+                              color: esFila
+                                  ? const Color(0xFF534AB7)
+                                  : estado == 'vacio'
+                                      ? Colors.white24
+                                      : Colors.transparent,
+                              width: 2,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Center(
-                          child: Text(
-                            texto,
-                            style: TextStyle(
-                              color: estado == 'vacio' ? Colors.white : _colorTexto(estado),
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
+                          child: Center(
+                            child: Text(
+                              texto,
+                              style: TextStyle(
+                                color: estado == 'vacio'
+                                    ? Colors.white
+                                    : _colorTexto(estado),
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
+                        );
+                      }),
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        width: 52,
+                        child: Text(
+                          _resultados[fila],
+                          style: TextStyle(
+                            color: _resultados[fila].isEmpty
+                                ? Colors.transparent
+                                : _esHardcore
+                                    ? const Color(0xFFEEEDFE)
+                                    : Colors.white54,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      );
-                    }),
+                      ),
+                    ],
                   ),
                 );
               },
@@ -284,14 +312,14 @@ class _Tecla extends StatelessWidget {
   final void Function(String) onTap;
   final double ancho;
 
-  const _Tecla(this.label, this.onTap, {this.ancho = 56});
+  const _Tecla(this.label, this.onTap, {this.ancho = 52});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => onTap(label),
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 4),
+        margin: const EdgeInsets.symmetric(horizontal: 3),
         width: ancho,
         height: 48,
         decoration: BoxDecoration(
