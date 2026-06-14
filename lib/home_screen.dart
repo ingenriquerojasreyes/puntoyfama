@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'game_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -84,7 +85,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: () {},
+              onPressed: () {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => GameScreen(nivel: _nivel, modo: _modo),
+    ),
+  );
+},
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF534AB7),
                     shape: RoundedRectangleBorder(
