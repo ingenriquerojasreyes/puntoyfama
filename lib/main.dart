@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'firebase_options.dart';
 import 'home_screen.dart';
+import 'registro_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const NumleApp());
 }
 
@@ -46,14 +55,45 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    Future.delayed(const Duration(seconds: 3), () {
+    Future.delayed(const Duration(seconds: 2), () {
+      _navegarSiguiente();
+    });
+  }
+
+  Future<void> _navegarSiguiente() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          MaterialPageRoute(builder: (_) => const RegistroScreen()),
         );
       }
-    });
+      return;
+    }
+
+    final doc = await FirebaseFirestore.instance
+        .collection('usuarios')
+        .doc(user.uid)
+        .get();
+
+    if (!mounted) return;
+
+    if (doc.exists) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
+    } else {
+      await FirebaseAuth.instance.signOut();
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const RegistroScreen()),
+        );
+      }
+    }
   }
 
   @override
