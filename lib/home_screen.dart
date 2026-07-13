@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'game_screen.dart';
 import 'perfil_screen.dart';
+import 'ranking_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,12 +18,23 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
         elevation: 0,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.emoji_events, color: Colors.white),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const RankingScreen()),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.person, color: Colors.white),
             onPressed: () {
@@ -52,19 +66,23 @@ class _HomeScreenState extends State<HomeScreen> {
                 'Puntos del mes',
                 style: TextStyle(color: Colors.white54, fontSize: 14),
               ),
-              const Text(
-                '0',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 64,
-                  fontWeight: FontWeight.bold,
+              if (uid == null)
+                const Text('0', style: TextStyle(color: Colors.white, fontSize: 64, fontWeight: FontWeight.bold))
+              else
+                StreamBuilder<DocumentSnapshot>(
+                  stream: FirebaseFirestore.instance.collection('usuarios').doc(uid).snapshots(),
+                  builder: (context, snapshot) {
+                    final pts = snapshot.hasData && snapshot.data!.exists
+                        ? (snapshot.data!.data() as Map<String, dynamic>)['puntos_mes'] ?? 0
+                        : 0;
+                    return Text(
+                      '$pts',
+                      style: const TextStyle(color: Colors.white, fontSize: 64, fontWeight: FontWeight.bold),
+                    );
+                  },
                 ),
-              ),
               const Spacer(),
-              const Text(
-                'Nivel',
-                style: TextStyle(color: Colors.white54, fontSize: 14),
-              ),
+              const Text('Nivel', style: TextStyle(color: Colors.white54, fontSize: 14)),
               const SizedBox(height: 8),
               Row(
                 children: ['Básico', 'Medio', 'Difícil'].map((nivel) {
@@ -79,10 +97,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 }).toList(),
               ),
               const SizedBox(height: 24),
-              const Text(
-                'Modo',
-                style: TextStyle(color: Colors.white54, fontSize: 14),
-              ),
+              const Text('Modo', style: TextStyle(color: Colors.white54, fontSize: 14)),
               const SizedBox(height: 8),
               Row(
                 children: ['Normal', 'Hardcore'].map((modo) {
@@ -140,11 +155,7 @@ class _Pill extends StatelessWidget {
   final bool activo;
   final VoidCallback onTap;
 
-  const _Pill({
-    required this.label,
-    required this.activo,
-    required this.onTap,
-  });
+  const _Pill({required this.label, required this.activo, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
