@@ -12,7 +12,12 @@ class PerfilScreen extends StatelessWidget {
     if (uid == null) {
       return const Scaffold(
         backgroundColor: Colors.black,
-        body: Center(child: Text('Sin sesión', style: TextStyle(color: Colors.white))),
+        body: Center(
+          child: Text(
+            'Sin sesión',
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
       );
     }
 
@@ -21,12 +26,18 @@ class PerfilScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.black,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Colors.white,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'Mi Perfil',
-          style: TextStyle(color: Colors.white, fontSize: 18),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+          ),
         ),
       ),
       body: StreamBuilder<DocumentSnapshot>(
@@ -35,31 +46,100 @@ class PerfilScreen extends StatelessWidget {
             .doc(uid)
             .snapshots(),
         builder: (context, snapshot) {
+
+          // =============================================
+          // PASO 4B - MANEJO DE ERROR DE FIREBASE
+          // =============================================
+
+          if (snapshot.hasError) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.cloud_off,
+                      color: Colors.white54,
+                      size: 48,
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      'No se pudo cargar tu perfil',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Comprueba tu conexión e intenta nuevamente.',
+                      style: TextStyle(
+                        color: Colors.white54,
+                        fontSize: 14,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: Color(0xFF534AB7)));
+            return const Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFF534AB7),
+              ),
+            );
           }
 
           if (!snapshot.hasData || !snapshot.data!.exists) {
             return const Center(
-              child: Text('No se encontraron datos', style: TextStyle(color: Colors.white54)),
+              child: Text(
+                'No se encontraron datos',
+                style: TextStyle(
+                  color: Colors.white54,
+                ),
+              ),
             );
           }
 
-          final data = snapshot.data!.data() as Map<String, dynamic>;
-          final alias = data['alias'] ?? 'jugador';
-          final plan = data['plan'] ?? 'free';
-          final puntosMes = data['puntos_mes'] ?? 0;
-          final puntosTotales = data['puntos_totales'] ?? 0;
-          final partidasJugadas = data['partidas_jugadas'] ?? 0;
-          final partidasGanadas = data['partidas_ganadas'] ?? 0;
-          final porcentajeExito = partidasJugadas == 0
-              ? 0.0
-              : (partidasGanadas / partidasJugadas) * 100;
+          final data =
+              snapshot.data!.data() as Map<String, dynamic>;
+
+          final alias =
+              data['alias'] ?? 'jugador';
+
+          final plan =
+              data['plan'] ?? 'free';
+
+          final puntosMes =
+              data['puntos_mes'] ?? 0;
+
+          final puntosTotales =
+              data['puntos_totales'] ?? 0;
+
+          final partidasJugadas =
+              data['partidas_jugadas'] ?? 0;
+
+          final partidasGanadas =
+              data['partidas_ganadas'] ?? 0;
+
+          final porcentajeExito =
+              partidasJugadas == 0
+                  ? 0.0
+                  : (partidasGanadas /
+                          partidasJugadas) *
+                      100;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
               children: [
                 Center(
                   child: Column(
@@ -68,85 +148,204 @@ class PerfilScreen extends StatelessWidget {
                         width: 80,
                         height: 80,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF26215C),
-                          borderRadius: BorderRadius.circular(40),
-                          border: Border.all(color: const Color(0xFF534AB7), width: 2),
+                          color:
+                              const Color(0xFF26215C),
+                          borderRadius:
+                              BorderRadius.circular(40),
+                          border: Border.all(
+                            color:
+                                const Color(0xFF534AB7),
+                            width: 2,
+                          ),
                         ),
                         child: Center(
                           child: Text(
-                            alias.isNotEmpty ? alias[0].toUpperCase() : '?',
-                            style: const TextStyle(
-                              color: Color(0xFFEEEDFE),
+                            alias.isNotEmpty
+                                ? alias[0]
+                                    .toUpperCase()
+                                : '?',
+                            style:
+                                const TextStyle(
+                              color:
+                                  Color(0xFFEEEDFE),
                               fontSize: 36,
-                              fontWeight: FontWeight.bold,
+                              fontWeight:
+                                  FontWeight.bold,
                             ),
                           ),
                         ),
                       ),
+
                       const SizedBox(height: 12),
+
                       Text(
                         alias,
-                        style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight:
+                              FontWeight.bold,
+                        ),
                       ),
+
                       const SizedBox(height: 4),
+
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        padding:
+                            const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF26215C),
-                          borderRadius: BorderRadius.circular(12),
+                          color:
+                              const Color(0xFF26215C),
+                          borderRadius:
+                              BorderRadius.circular(12),
                         ),
                         child: Text(
                           plan.toUpperCase(),
-                          style: const TextStyle(color: Color(0xFF534AB7), fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 2),
+                          style: const TextStyle(
+                            color:
+                                Color(0xFF534AB7),
+                            fontSize: 12,
+                            fontWeight:
+                                FontWeight.bold,
+                            letterSpacing: 2,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
+
                 const SizedBox(height: 32),
+
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(color: const Color(0xFF26215C), borderRadius: BorderRadius.circular(12)),
+                  padding:
+                      const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color:
+                        const Color(0xFF26215C),
+                    borderRadius:
+                        BorderRadius.circular(12),
+                  ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
                     children: [
-                      const Text('Puntos del mes', style: TextStyle(color: Colors.white54, fontSize: 14)),
+                      const Text(
+                        'Puntos del mes',
+                        style: TextStyle(
+                          color: Colors.white54,
+                          fontSize: 14,
+                        ),
+                      ),
+
                       const SizedBox(height: 4),
+
                       Text(
                         '$puntosMes',
-                        style: const TextStyle(color: Color(0xFF534AB7), fontSize: 48, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          color:
+                              Color(0xFF534AB7),
+                          fontSize: 48,
+                          fontWeight:
+                              FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
                 ),
+
                 const SizedBox(height: 16),
+
                 Row(
                   children: [
-                    Expanded(child: _StatCard(label: 'Puntos totales', valor: '$puntosTotales', icono: Icons.star)),
+                    Expanded(
+                      child: _StatCard(
+                        label:
+                            'Puntos totales',
+                        valor:
+                            '$puntosTotales',
+                        icono:
+                            Icons.star,
+                      ),
+                    ),
+
                     const SizedBox(width: 12),
-                    Expanded(child: _StatCard(label: '% Éxito', valor: '${porcentajeExito.toStringAsFixed(0)}%', icono: Icons.emoji_events)),
+
+                    Expanded(
+                      child: _StatCard(
+                        label: '% Éxito',
+                        valor:
+                            '${porcentajeExito.toStringAsFixed(0)}%',
+                        icono:
+                            Icons.emoji_events,
+                      ),
+                    ),
                   ],
                 ),
+
                 const SizedBox(height: 12),
+
                 Row(
                   children: [
-                    Expanded(child: _StatCard(label: 'Jugadas', valor: '$partidasJugadas', icono: Icons.grid_on)),
+                    Expanded(
+                      child: _StatCard(
+                        label: 'Jugadas',
+                        valor:
+                            '$partidasJugadas',
+                        icono:
+                            Icons.grid_on,
+                      ),
+                    ),
+
                     const SizedBox(width: 12),
-                    Expanded(child: _StatCard(label: 'Ganadas', valor: '$partidasGanadas', icono: Icons.check_circle)),
+
+                    Expanded(
+                      child: _StatCard(
+                        label: 'Ganadas',
+                        valor:
+                            '$partidasGanadas',
+                        icono:
+                            Icons.check_circle,
+                      ),
+                    ),
                   ],
                 ),
+
                 const SizedBox(height: 32),
+
                 SizedBox(
                   width: double.infinity,
                   height: 52,
                   child: ElevatedButton(
                     onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF534AB7),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    style:
+                        ElevatedButton.styleFrom(
+                      backgroundColor:
+                          const Color(
+                        0xFF534AB7,
+                      ),
+                      shape:
+                          RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(
+                          12,
+                        ),
+                      ),
                     ),
-                    child: const Text('Mejorar a PLUS', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 2)),
+                    child: const Text(
+                      'Mejorar a PLUS',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight:
+                            FontWeight.bold,
+                        letterSpacing: 2,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -163,7 +362,11 @@ class _StatCard extends StatelessWidget {
   final String valor;
   final IconData icono;
 
-  const _StatCard({required this.label, required this.valor, required this.icono});
+  const _StatCard({
+    required this.label,
+    required this.valor,
+    required this.icono,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -171,16 +374,42 @@ class _StatCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFF0D0D0D),
-        border: Border.all(color: Colors.white12),
-        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.white12,
+        ),
+        borderRadius:
+            BorderRadius.circular(12),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
         children: [
-          Icon(icono, color: const Color(0xFF534AB7), size: 20),
+          Icon(
+            icono,
+            color:
+                const Color(0xFF534AB7),
+            size: 20,
+          ),
+
           const SizedBox(height: 8),
-          Text(valor, style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
-          Text(label, style: const TextStyle(color: Colors.white54, fontSize: 12)),
+
+          Text(
+            valor,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 28,
+              fontWeight:
+                  FontWeight.bold,
+            ),
+          ),
+
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white54,
+              fontSize: 12,
+            ),
+          ),
         ],
       ),
     );
