@@ -5,6 +5,49 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class PerfilScreen extends StatelessWidget {
   const PerfilScreen({super.key});
 
+  void _mostrarPlus(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF26215C),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text(
+          'NUMLE PLUS',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        content: const Text(
+          'Estamos preparando nuevas funciones y beneficios para el plan PLUS.\n\nMuy pronto estarán disponibles.',
+          style: TextStyle(
+            color: Color(0xFFEEEDFE),
+            fontSize: 15,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'ENTENDIDO',
+              style: TextStyle(
+                color: Color(0xFF534AB7),
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -46,11 +89,6 @@ class PerfilScreen extends StatelessWidget {
             .doc(uid)
             .snapshots(),
         builder: (context, snapshot) {
-
-          // =============================================
-          // PASO 4B - MANEJO DE ERROR DE FIREBASE
-          // =============================================
-
           if (snapshot.hasError) {
             return const Center(
               child: Padding(
@@ -321,7 +359,9 @@ class PerfilScreen extends StatelessWidget {
                   width: double.infinity,
                   height: 52,
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      _mostrarPlus(context);
+                    },
                     style:
                         ElevatedButton.styleFrom(
                       backgroundColor:
